@@ -72,12 +72,12 @@ From a code review perspective the following standards will be enforced.
 
 #### Braces are Used Where Optional
 Braces should be used with `if`, `else`, `for`, `do`, and `while` statements even if the body includes a single statement or is empty.
-##### :x:  Incorrect Example 
+##### Incorrect Example 
 ```apex
 if(condition)
     statement;
 ```
-#####  :white_check_mark:  Correct Example
+##### Correct Example
 ```apex
 if(condition){
     statement;
@@ -89,5 +89,9 @@ The maximum line length should generally not exceed 120 characters. Once the lim
 
 
 ### Best Practices
+##### No DML in For Loops
+##### No SOQL in For Loops
+##### Use SOQL For Loops
+##### 
 ### Testing
 ### Error Handling
