@@ -72,12 +72,12 @@ From a code review perspective the following standards will be enforced.
 
 #### Braces are Used Where Optional
 Braces should be used with `if`, `else`, `for`, `do`, and `while` statements even if the body includes a single statement or is empty.
-##### :x: Incorrect Example 
+##### :x:  Incorrect Example 
 ```apex
 if(condition)
     statement;
 ```
-#####  :white_check_mark: Correct Example
+#####  :white_check_mark:  Correct Example
 ```apex
 if(condition){
     statement;
