@@ -4,9 +4,10 @@
 * [Introduction](#Introduction)
 * [Naming Conventions](#Naming-Conventions)
 * [Formatting](#Formatting)
+* [Best Practices](#Best-Practices)
 * [Testing](#Testing)
 * [Error Handling](#Error-Handling)
-* [Best Practices](#Best-Practices)
+
 
 ### Introduction
 ### Naming Conventions
@@ -43,13 +44,50 @@ Method names should be verbs, written in lowerCamelCase. The name should be made
 
 Method Name | Correct | Reason
 -----------|---------|-------|
+q1BECCalc | :x: | Name is not descriptive of what the method does
+house|:x:| Not a verb
+ProcessPayment |:x: | Name isn't written in lowerCamelCase, processPayment is the correct way to write this method name. 
 generatePDF|:white_check_mark:|
 calculateTax|:white_check_mark:|
-Q1BECCalc | :x: | Name is not descriptive of what the method does
+
+#### Variable Names
+Variable names are written in lowerCamelCase. The names should be short yet descriptive. One character names should be avoided with the exception of temporary variables like those used within a **short** For Loop (ex. i,j,k,m,n). A variable's purpose should be clear by its name, a programmer shouldn't have to navigate to where a variable is declared to understand what it is used for. 
+
+##### Constant Names
+Constants are the only types of variables that should be written in uppercase with words separated by underscores ex. MIN_AMOUNT. 
 
 
+Method Name | Correct | Reason
+-----------|---------|-------|
+Z | :x: | What is Z referring to? This would only be acceptable if it was used within a very short section of code as a throwaway variable, but even then a more common temporary variable name like i or j should be used instead. 
+OriginalQuantity|:x:| The variable is not written in lowerCamelCase, originalQuantity is the correct way to write this. 
+agDEC |:x: | It is not clear what the intent of this variable is. 
+locationInventory|:white_check_mark:|
+accountID|:white_check_mark:|
 
 ### Formatting
+We use the [Prettier Code Formatter](https://developer.salesforce.com/tools/vscode/en/user-guide/prettier/) for APEX which is available through this [plugin](https://github.com/dangmai/prettier-plugin-apex).  Most developers are auto formatting their code upon save through the use of a code formatting engine. If multiple developers are working on the same file it is very beneficial that they use the same code formatter. For this reason the use of this plugin is encouraged but not required.
+
+From a code review perspective the following standards will be enforced.
+
+#### Braces are Used Where Optional
+Braces should be used with `if`, `else`, `for`, `do`, and `while` statements even if the body includes a single statement or is empty.
+##### :x: Incorrect Example 
+```apex
+if(condition)
+    statement;
+```
+#####  :white_check_mark: Correct Example
+```apex
+if(condition){
+    statement;
+}
+```
+
+#### Maximum Line Length 120 Characters
+The maximum line length should generally not exceed 120 characters. Once the limit has been reached the line should be wrapped onto another line. 
+
+
+### Best Practices
 ### Testing
 ### Error Handling
-### Best Practices
