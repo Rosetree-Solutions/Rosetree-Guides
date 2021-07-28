@@ -92,6 +92,13 @@ The maximum line length should generally not exceed 120 characters. Once the lim
 ##### No DML in For Loops
 ##### No SOQL in For Loops
 ##### Use SOQL For Loops
-##### 
+##### Use Relationships to Limit Queries
+##### Use Database Methods to Allow Partial Success
+##### Only Use One Trigger Per Object 
+##### Keep Logic Out of Triggers
+##### Avoid Hardcoding IDs
+##### Write Clean Code
+##### Bulkify Code
+
 ### Testing
 ### Error Handling
