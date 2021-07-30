@@ -267,7 +267,7 @@ trigger AccountTrigger on Account(before update) {
 
 A developer should always be as efficient as possible when writing queries against the database. The current synchronous SOQL limit is 100 queries issued within one Apex transaction. The 100 query limit may sound like a lot, but as the code base grows and additional solutions are added you can hit the limit easily if queries have not been handled efficiently from the begining.
 
-#####Combine SOQL Queries Where Possible
+##### Combine SOQL Queries Where Possible
 
 ###### Incorrect Example
 
@@ -309,7 +309,8 @@ A developer should always be as efficient as possible when writing queries again
       }
 ```
 
-#####Use Relationships in Queries
+##### Use Relationships in Queries
+
 Use relationships in queries to pull in all of the required data and records into one consolidated query. In the one query below we are pulling in Accounts with their closed opportunities including the owner of those opportunities.
 
 ```Apex
@@ -548,16 +549,17 @@ We should always ask to see if the client already has a test data factory that t
 
 At Rosetree we use the ApexDocs standard to document the classes we write. Even if the client doesn't choose to generate the static HTML pages that the Java app provides the documentation within the class is helpful for future developers. **At a minimum ApexDoc should be written for every class**, but it would also be beneficial to add to most methods.
 
-####Class Documentation
-| token | description |
-|-------|-------------|
-| @author | the author of the class |
-| @date | the date the class was first implemented |
-| @group | a group to display this class under, in the menu hierarchy|
-| @group-content | a relative path to a static html file that provides content about the group|
-| @description | one or more lines that provide an overview of the class|
+#### Class Documentation
 
-######Example
+| token          | description                                                                 |
+| -------------- | --------------------------------------------------------------------------- |
+| @author        | the author of the class                                                     |
+| @date          | the date the class was first implemented                                    |
+| @group         | a group to display this class under, in the menu hierarchy                  |
+| @group-content | a relative path to a static html file that provides content about the group |
+| @description   | one or more lines that provide an overview of the class                     |
+
+###### Example
 
 ```Apex
     /**
@@ -577,7 +579,8 @@ At Rosetree we use the ApexDocs standard to document the classes we write. Even 
 | @param _param name_ | a description of what the parameter does|
 | @return | a description of the return value from the method|
 | @example | Example code usage. This will be wrapped in <code> tags to preserve whitespace|
-######Example
+
+###### Example
 
 ```Apex
     /*
