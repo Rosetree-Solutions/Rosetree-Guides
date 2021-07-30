@@ -8,6 +8,7 @@
 - [Best Practices](#Best-Practices)
 - [Testing](#Testing)
 - [Error Handling](#Error-Handling)
+- [ApexDocs](#ApexDocs)
 
 ## Introduction
 
