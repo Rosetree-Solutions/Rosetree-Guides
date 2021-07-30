@@ -9,9 +9,9 @@
 - [Testing](#Testing)
 - [Error Handling](#Error-Handling)
 
-### Introduction
+## Introduction
 
-### Naming Conventions
+## Naming Conventions
 
 #### Class Names
 
@@ -71,7 +71,7 @@ Constants are the only types of variables that should be written in uppercase wi
 | locationInventory | :white_check_mark: |
 | accountID         | :white_check_mark: |
 
-### Formatting
+## Formatting
 
 We use the [Prettier Code Formatter](https://developer.salesforce.com/tools/vscode/en/user-guide/prettier/) for APEX which is available through this [plugin](https://github.com/dangmai/prettier-plugin-apex). Most developers are auto formatting their code upon save through the use of a code formatting engine. If multiple developers are working on the same file it is very beneficial that they use the same code formatter. For this reason the use of this plugin is encouraged but not required.
 
@@ -174,9 +174,9 @@ Yet, another example showing how to break up longer queries with an inner query.
     ];
 ```
 
-### Best Practices
+## Best Practices
 
-##### No DML in For Loops
+#### No DML in For Loops
 
 There are governor limits that enforce the maximum number of DML statements (insert, update, delete, undelete) used within an Apex transaction. When DML statements are placed inside of a `for` loop they are run once per iteration of the loop making it easy to hit the limit quickly.
 
@@ -217,7 +217,7 @@ private static void updateAccounts(List<Account> accountList) {
 }
 ```
 
-##### No SOQL in For Loops
+#### No SOQL in For Loops
 
 There are governor limits that enforce the maximum number of SOQL queries used within an Apex transaction. When SOQL queries are placed inside of a `for` loop they are run once per iteration of the loop making it easy to hit the limit quickly. Instead SOQL queries should be moved out of `for` loops.
 
@@ -262,15 +262,82 @@ trigger AccountTrigger on Account(before update) {
 }
 ```
 
-##### Use Relationships to Limit Queries
+#### Use SOQL Queries Efficiently
 
-##### Use Database Methods to Allow Partial Success
+A developer should always be as efficient as possible when writing queries against the database. The current synchronous SOQL limit is 100 queries issued within one Apex transaction. The 100 query limit may sound like a lot, but as the code base grows and additional solutions are added you can hit the limit easily if queries have not been handled efficiently from the begining.
 
-##### Only Use One Trigger Per Object
+#####Combine SOQL Queries Where Possible
 
-##### Keep Logic Out of Triggers
+###### Incorrect Example
 
-##### Avoid Hardcoding IDs
+```apex
+    /* Here two queries are used when
+     * they could be combined into one.
+     */
+      List<Opportunity> oppsOver100K = [
+        SELECT ID, Name, Amount
+        FROM Opportunity
+        WHERE Amount >= 100000.00
+      ];
+      List<Opportunity> oppsLessThan100K = [
+        SELECT ID, Name, Amount
+        FROM Opportunity
+        WHERE Amount < 100000.00
+      ];
+```
+
+###### Correct Example
+
+```apex
+      /* Here we are creating lists that we are populating
+       * via one query inside a SOQL For Loop
+       */
+      List<Opportunity> oppsOver100K = new List<Opportunity>();
+      List<Opportunity> oppsLessThan100K = new List<Opportunity>();
+
+      for (Opportunity opp : [
+        SELECT ID, Name, Amount
+        FROM Opportunity
+        WHERE Amount >= 100000.00
+      ]) {
+        if (opp.Amount >= 100000.00) {
+          oppsOver100K.add(opp);
+        } else {
+          oppsLessThan100K.add(opp);
+        }
+      }
+```
+
+#####Use Relationships in Queries
+Use relationships in queries to pull in all of the required data and records into one consolidated query. In the one query below we are pulling in Accounts with their closed opportunities including the owner of those opportunities.
+
+```Apex
+    List<Account> accountsWithClosedOpportunities = [
+    SELECT
+        id,
+        name,
+        (
+        SELECT id, name, closedate, stagename, OwnerId, Owner.Name
+        FROM Opportunities
+        WHERE
+            accountId IN :Trigger.newMap.keySet()
+            AND (StageName = 'Closed - Lost'
+            OR StageName = 'Closed - Won')
+        )
+    FROM Account
+    WHERE Id IN :Trigger.newMap.keySet()
+    ];
+```
+
+#### Be Aware of Limits
+
+#### Use Database Methods to Allow Partial Success
+
+#### Only Use One Trigger Per Object
+
+#### Keep Logic Out of Triggers
+
+#### Avoid Hardcoding IDs
 
 Most IDs change between sandbox and production environments. For this reason we should not place IDs directly in the Apex code.
 
@@ -312,13 +379,13 @@ trigger AccountTrigger on Account(before update) {
 }
 ```
 
-##### Write Clean Code
+#### Write Clean Code
 
-##### Bulkify Code
+#### Bulkify Code
 
-##### Map Best Practices
+#### Map Best Practices
 
-### Test Classes
+## Test Classes
 
 The foremost goal of a test class is to ensure that Apex code is working as designed and expected.
 
@@ -468,8 +535,58 @@ Another great way to generate test data is through the use of a test data factor
 
 We should always ask to see if the client already has a test data factory that they would like for us to use. If they don't have one we should consider creating one if we will need to create several test classes for them.
 
-### Error Handling
+## Error Handling
 
 -- Example of what not to do i.e. catch an exception and system.debug it
 -- Example of Try Catch
 -- Example of Try Catch with Apex Logger
+
+## ApexDocs
+
+[ApexDocs](https://github.com/SalesforceFoundation/ApexDoc) is a Java app which can be used to document Salesforce Apex Classes. You simply point the app at the location of the Apex classes/project folder and it will automatically generate static HTML pages that fully document the class including its properties and methods.
+
+At Rosetree we use the ApexDocs standard to document the classes we write. Even if the client doesn't choose to generate the static HTML pages that the Java app provides the documentation within the class is helpful for future developers. **At a minimum ApexDoc should be written for every class**, but it would also be beneficial to add to most methods.
+
+####Class Documentation
+| token | description |
+|-------|-------------|
+| @author | the author of the class |
+| @date | the date the class was first implemented |
+| @group | a group to display this class under, in the menu hierarchy|
+| @group-content | a relative path to a static html file that provides content about the group|
+| @description | one or more lines that provide an overview of the class|
+
+######Example
+
+```Apex
+    /**
+    * @author Rosetree Solutions
+    * @website https://rosetreesolutions.com/
+    * @email info@RosetreeSolutions.com
+    * @phone (214) 731 - 7314
+    * @date the date the class was first implemented
+    * @description one or more lines that provide an overview of the class
+    */
+```
+
+####Method Documentation
+| token | description |
+|-------|-------------|
+| @description | one or more lines that provide an overview of the method|
+| @param _param name_ | a description of what the parameter does|
+| @return | a description of the return value from the method|
+| @example | Example code usage. This will be wrapped in <code> tags to preserve whitespace|
+######Example
+
+```Apex
+    /*
+    * @description Returns field describe data
+    * @param objectName the name of the object to look up
+    * @param fieldName the name of the field to look up
+    * @return the describe field result for the given field
+    */
+    public static Schema.DescribeFieldResult getFieldDescribe(String objectName, String fieldName) {
+     // Logic goes here...
+    }
+
+```
