@@ -318,9 +318,158 @@ trigger AccountTrigger on Account(before update) {
 
 ##### Map Best Practices
 
-### Testing
+### Test Classes
 
-- 90%
-- system assert
+The foremost goal of a test class is to ensure that Apex code is working as designed and expected.
+
+##### 100% Code Coverage is the Goal, 90% is Acceptable
+
+We should always aim for 100% code coverage. However, there are many situations where it isn't possible or practical to hit 100% code coverage, thus 90% is acceptable. There are very few scenarios where 90% coverage is not obtainable.
+
+##### Test Exception Handling and Negative Test Cases
+
+Test methods should be written to ensure the code handles unexpected results, invalid data, and exceptions well. Adding tests to trigger exceptions and negative test cases not only ensures the code is handling those scenarios appropriately but it also will greatly assist in achieving proper code coverage as we will be covering the catch blocks of our try/catches.
+
+Sometimes it can be difficult to trigger exceptions in the code via a test class. The following pattern can be used to allow test methods to trigger exceptions when needed.
+
+```Apex
+public class WarehouseInventory {
+  /*  Create a testVisible variable that we will use to
+   *  conditionally trigger an exception
+   */
+  @testVisible
+  private String testThrowException;
+
+  public static void checkInventory(){
+      try {
+
+          // Method logic goes here...
+
+          /* If the variable is set in the test class
+           * we will throw the exception. We use a string
+           * variable instead of a boolean so that we can
+           * trigger different exceptions throughout the code
+           * by passing in different strings.
+           */
+          if(testThrowException == 'Throw DML Exception'){
+              throw new DmlException();
+          }
+
+      } catch(Exception e){
+        new ErrorHandler('Warehouse Inventory Class','Error Checking Inventory',e);
+        throw e;
+      }
+  }
+}
+```
+
+```Apex
+@isTest
+public class WarehouseInventory_Test {
+
+    @isTest
+    static void testDMLException(){
+        WarehouseInventory inventory = new WarehouseInventory();
+        inventory.testThrowException = 'Throw DML Exception';
+        try {
+            inventory.checkInventory();
+        } catch(Exception e){
+            system.assert(
+                e.getTypeName() == ‘System.DmlException’,
+                ‘The error caught should be a DML exception’
+            );
+            /* Here we would also assert our error logger
+             * created a record as expected.
+             */
+        }
+    }
+
+```
+
+##### System Asserts
+
+System asserts should be used to verify the code is working as expected. It is not enough to simply achieve proper code coverage, we must also confirm the code is working as designed.
+
+```Apex
+@isTest
+public class AccountTrigger_Test {
+
+    @isTest
+    static void testAccountInsertion(){
+        List<Account> accountsToInsert = new List<Account>();
+        for(Integer i = 0; i<10; i++){
+            Account newAccount = new Account();
+            newAccount.name='test'+i;
+            newAccount.Division__c = 'Commercial';
+            accountsToInsert.add(newAccount);
+        }
+        insert accountsToInsert;
+        //Query the records that were just created
+        List<Account> createdAccounts = [SELECT Id, Division__c, Contract__c From Account];
+
+        //Ensure 10 accounts were inserted
+        System.assert(createdAccounts.size() == 10,'10 account records should be returned');
+
+        /*
+         * Loop through the accounts and verify a contract
+         * was created and associated with each account.
+         * In the Account trigger a default contract record
+         * should be created for every commercial account.
+         * Here we are verifying the code is working as designed.
+         */
+        for(Account acc : createdAccounts){
+            System.assert(acc.Contract__c != null,'A contract should be populated for each commercial account');
+        }
+    }
+}
+
+```
+
+##### Don't Use SeeAllData = True
+
+You should create all of the data that your test class relies on directly within the test class. Each test class should work independently and be isolated from the rest of the data in the environment.
+
+###### Test Setup Methods
+
+Test setup methods can and should be used to create test data that all test methods within the test class can rely in. Creating all or most of the data for the test class within one setup method will help keep the test methods clean.
+
+```Apex
+@isTest
+public class AccountTrigger_Test {
+    @testSetup static void setup() {
+        /*
+         * Create common test data that all test methods
+         * within this class can use.
+         */
+        List<Account> testAccounts = new List<Account>();
+        for(Integer i=0;i<2;i++) {
+            testAccounts.add(new Account(Name = 'TestAcct '+i));
+        }
+        insert testAccounts;
+    }
+    @isTest
+    static void testAccountUpdate(){
+
+        Account a = [SELECT Id FROM Account WHERE Name='TestAcct 0' LIMIT 1];
+        a.Division__c = 'Commercial';
+        update a;
+
+        // Get the updated Account
+        Account updatedAccount = [SELECT Id, Division__c, Contract__c From Account WHERE Id = :a.Id LIMIT 1];
+        System.assert(updatedAccount.Contract__c != null,'A contract should be populated for each account');
+    }
+}
+
+```
+
+###### Test Data Factory
+
+Another great way to generate test data is through the use of a test data factory. A test data factory is a separate class that is responsible for generating test data. All test classes written can then rely on the test data factory class to generate the test data needed. If validation rules or new required fields are added to an object a developer just needs to update the test data factory class instead of having to update the object creation in every test class.
+
+We should always ask to see if the client already has a test data factory that they would like for us to use. If they don't have one we should consider creating one if we will need to create several test classes for them.
 
 ### Error Handling
+
+-- Example of what not to do i.e. catch an exception and system.debug it
+-- Example of Try Catch
+-- Example of Try Catch with Apex Logger
