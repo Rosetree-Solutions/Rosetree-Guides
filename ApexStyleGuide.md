@@ -12,6 +12,12 @@
 
 ## Introduction
 
+The purpose of this style guide is to document the best practices and standards that we abide by as an organization when writing Apex code. The code that we write should not only be functional and performant, but it should also be maintainable. At the end of the day we will be handing our completed solutions over to our clients and fellow developers to maintain. For this reason we should strive to write clean code that is easily readable and extensible which is as important as making it functional.
+
+This document will serve as the basis for code review comments and suggestions. The content included in this document is certainly not exhaustive of everything one needs to know to write proper Apex code. However the information included should provide guidance for the most criticical areas surrounding best practices, cleanliness, maintainability, and general standards that we follow.
+
+Please note, you are strongly encouraged to share your thoughts on the content within this document. If you disagree with anything in this style guide or you think something should be added simply create a Feature branch, make the change, and submit it via a pull request for review. At the end of the day we strive to write good code as an organization and learning from each other is paramount to us achieving this goal.
+
 ## Naming Conventions
 
 #### Class Names
@@ -331,7 +337,9 @@ Use relationships in queries to pull in all of the required data and records int
     ];
 ```
 
-#### Be Aware of Limits
+#### Be Efficient with Limits
+
+All Apex code is held to specified governor limits. When writing code the goal is not to simply stay within the limits, but to write code efficiently so that it consumes the least number of limits possible.
 
 #### Use Database Methods to Allow Partial Success
 
