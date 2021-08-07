@@ -3,9 +3,11 @@
 ## Table of Contents
 
 - [Introduction](#Introduction)
-- [Naming Conventions](#Naming-Conventions)
+
 - [Formatting](#Formatting)
 - [Best Practices](#Best-Practices)
+- [Keep Code Clean](#Keep-Code-Clean)
+  - [Naming Conventions](#Naming-Conventions)
 - [Testing](#Testing)
 - [Error Handling](#Error-Handling)
 - [ApexDocs](#ApexDocs)
@@ -17,66 +19,6 @@ The purpose of this style guide is to document the best practices and standards 
 This document will serve as the basis for code review comments and suggestions. The content included in this document is certainly not exhaustive of everything one needs to know to write proper Apex code. However the information included should provide guidance for the most criticical areas surrounding best practices, cleanliness, maintainability, and general standards that we follow.
 
 Please note, you are strongly encouraged to share your thoughts on the content within this document. If you disagree with anything in this style guide or you think something should be added simply create a Feature branch, make the change, and submit it via a pull request for review. At the end of the day we strive to write good code as an organization and learning from each other is paramount to us achieving this goal.
-
-## Naming Conventions
-
-#### Class Names
-
-Class names should be nouns or noun phrases that are written in UpperCamelCase. The name should be made up of whole words avoiding acronyms and abbreviations when possible with the exception of widely used acronyms such as PDF and HTML. The names should be descriptive of the classes purpose while being as short as possible.
-
-##### Examples
-
-| Class Name            | Correct            | Reason                                                   |
-| --------------------- | ------------------ | -------------------------------------------------------- |
-| BECAccount            | :x:                | Abbreviations should be avoided                          |
-| GenerateInvoice       | :x:                | Class names should be nouns or noun phrases.             |
-| OppHndlr              | :x:                | Whole words should be used in the place of abbreviations |
-| postSandboxRefresh    | :x:                | Class names should start with a capital letter.          |
-| XProxyFactory         | :x:                | Class name is not descriptive of its purpose.            |
-| ProjectClone          | :white_check_mark: |
-| AccountTaxCalculation | :white_check_mark: |
-
-##### Class Suffixes
-
-Suffixes will be used to designate special types of classes. The suffix will be preceded by an underscore which will further highlight the class type, **this is the only time you would use an underscore in a class name**.
-
-| Class Type      | Suffix           | Example                       |
-| --------------- | ---------------- | ----------------------------- |
-| Test            | \_Test           | ProjectPricing_Test           |
-| Trigger         | \_Trigger        | ProjectPricing_Trigger        |
-| Trigger Handler | \_TriggerHandler | ProjectPricing_TriggerHandler |
-| Schedulable     | \_Schedule       | ProjectPricing_Schedule       |
-| Queueable       | \_Queueable      | ProjectPricing_Queueable      |
-| Batch           | \_Batch          | ProjectPricing_Batch          |
-| Controller      | \_Controller     | ProjectPricing_Controller     |
-
-#### Method Names
-
-Method names should be verbs, written in lowerCamelCase. The name should be made up of whole words avoiding acronyms and abbreviations when possible with the exception of widely used acronyms such as PDF and HTML.
-
-| Method Name    | Correct            | Reason                                                                                             |
-| -------------- | ------------------ | -------------------------------------------------------------------------------------------------- |
-| q1BECCalc      | :x:                | Name is not descriptive of what the method does                                                    |
-| house          | :x:                | Not a verb                                                                                         |
-| ProcessPayment | :x:                | Name isn't written in lowerCamelCase, processPayment is the correct way to write this method name. |
-| generatePDF    | :white_check_mark: |
-| calculateTax   | :white_check_mark: |
-
-#### Variable Names
-
-Variable names are written in lowerCamelCase. The names should be short yet descriptive. One character names should be avoided with the exception of temporary variables like those used within a **short** For Loop (ex. i,j,k,m,n). A variable's purpose should be clear by its name, a programmer shouldn't have to navigate to where a variable is declared to understand what it is used for.
-
-##### Constant Names
-
-Constants are the only types of variables that should be written in uppercase with words separated by underscores ex. MIN_AMOUNT.
-
-| Method Name       | Correct            | Reason                                                                                                                                                                                                                    |
-| ----------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Z                 | :x:                | What is Z referring to? This would only be acceptable if it was used within a very short section of code as a throwaway variable, but even then a more common temporary variable name like i or j should be used instead. |
-| OriginalQuantity  | :x:                | The variable is not written in lowerCamelCase, originalQuantity is the correct way to write this.                                                                                                                         |
-| agDEC             | :x:                | It is not clear what the intent of this variable is.                                                                                                                                                                      |
-| locationInventory | :white_check_mark: |
-| accountID         | :white_check_mark: |
 
 ## Formatting
 
@@ -337,15 +279,76 @@ Use relationships in queries to pull in all of the required data and records int
     ];
 ```
 
-#### Be Efficient with Limits
+#### Be Mindful & Efficient with Limits
 
-All Apex code is held to specified governor limits. When writing code the goal is not to simply stay within the limits, but to write code efficiently so that it consumes the least number of limits possible.
+All Apex code is held to specified [governor limits](https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm). When writing code the goal is not to simply stay within the limits, but to write code efficiently so that it consumes the least number of limits possible. If you can refactor a section of code to consume fewer SOQL queries, DML statements, or callouts it is always better to do so even if it means the code is slightly longer or is a little less easy to read.
 
-#### Use Database Methods to Allow Partial Success
+#### Know When To Use DML VS Database Methods
 
-#### Only Use One Trigger Per Object
+When running a DML operation on a list it is common that if one record fails you **do not** want all of the other records to also fail. For this reason it is often preferred to use [Database methods](https://developer.salesforce.com/docs/atlas.en-us.apexref.meta/apexref/apex_methods_system_database.htm#apex_System_Database_insert_2) instead of a standard DML operation. When changing data in the database always consider how potential errors should be handled.
 
-#### Keep Logic Out of Triggers
+- **Use DML When**: You would like an error that is returned during processing to return an exception as well as block all of the other records from being processed.
+- **Use Database Methods When**: You would like to allow partial success on bulk operations with the ability to review any errors via the results array response.
+
+```Apex
+
+  /*
+   * Two accounts, one of which is missing a required field
+   */
+
+  Account[] accounts = new List<Account>{
+    new Account(Name = 'Test Account'),
+    new Account()
+  };
+  Database.SaveResult[] srList = Database.insert(accounts, false);
+
+  try {
+    insert accounts;
+  } catch (Exception e) {
+    // Handle the error...
+    ErrorHandler log = new ErrorHandler(
+      'Account Insert Handler',
+      'Error occurred when inserting Account List',
+      e
+    );
+  }
+
+  /*
+   * Database.insert Example
+   */
+  Database.SaveResult[] srList = Database.insert(accounts, false);
+  for (Database.SaveResult sr : srList) {
+    if (!sr.isSuccess()) {
+      for (Database.Error err : sr.getErrors()) {
+        // Handle the error...
+        ErrorHandler log = new ErrorHandler(
+          'Account Insert Handler',
+          'Error occurred when inserting Account List ' + err.getMessage()
+        );
+      }
+    }
+  }
+
+
+```
+
+#### Bulkify Your Code
+
+Ensure your code properly handles batches of records. This is especially important with Triggers as it is common for a trigger to be invoked by a batch of records being processed through an import or API call into Salesforce. However when writing any Apex code make sure you understand how the code will be invoked; when code is invoked via a batch of records all of the records should be processed in bulk to ensure the solution is scalable and we are staying within limits. The sections on [SOQL ](##no-soql-in-for-loops) and [DML ](#no-dml-in-for-loops) statements in `For` loops share some bulk processing techniques.
+
+#### Trigger Best Practices
+
+##### Only Have One Trigger Per Object
+
+When multiple Triggers are created for the exact same object you can't control the order in which each Trigger runs. In addition multiple Triggers is more difficult to debug and maintain. When creating a Trigger for a client always look and see if another trigger exists on the object first; if a Trigger already exists it is very likely their developers would prefer you add on to their existing trigger/handler.
+
+##### Keep Logic Out of Triggers
+
+Placing all of the logic of Triggers inside a Trigger Handler will keep the Trigger itself clean as well as allow one to run the logic of a trigger separately in another class if desired. Breaking out the logic into separate methods within the handler also makes it much easier to maintain and extend the Trigger logic.
+
+##### Use the RTS Trigger Framework
+
+If the client doesn't have an existing Trigger framework you should use the RTS Trigger Framework (after reviewing with the client). Our Trigger framework makes developing new Triggers and Trigger Handlers fast and easy while also including several best practices such as separating the trigger logic into handler classes, Apex bypass logic, and recursion prevention via the use of static variables.
 
 #### Avoid Hardcoding IDs
 
@@ -389,11 +392,89 @@ trigger AccountTrigger on Account(before update) {
 }
 ```
 
-#### Write Clean Code
+## Keep Code Clean
 
-#### Bulkify Code
+### Naming Conventions
 
-#### Map Best Practices
+#### Class Names
+
+Class names should be nouns or noun phrases that are written in UpperCamelCase. The name should be made up of whole words avoiding acronyms and abbreviations when possible with the exception of widely used acronyms such as PDF and HTML. The names should be descriptive of the classes purpose while being as short as possible.
+
+##### Examples
+
+| Class Name            | Correct            | Reason                                                   |
+| --------------------- | ------------------ | -------------------------------------------------------- |
+| BECAccount            | :x:                | Abbreviations should be avoided                          |
+| GenerateInvoice       | :x:                | Class names should be nouns or noun phrases.             |
+| OppHndlr              | :x:                | Whole words should be used in the place of abbreviations |
+| postSandboxRefresh    | :x:                | Class names should start with a capital letter.          |
+| XProxyFactory         | :x:                | Class name is not descriptive of its purpose.            |
+| ProjectClone          | :white_check_mark: |
+| AccountTaxCalculation | :white_check_mark: |
+
+##### Class Suffixes
+
+Suffixes will be used to designate special types of classes. The suffix will be preceded by an underscore which will further highlight the class type, **this is the only time you would use an underscore in a class name**.
+
+| Class Type      | Suffix           | Example                       |
+| --------------- | ---------------- | ----------------------------- |
+| Test            | \_Test           | ProjectPricing_Test           |
+| Trigger         | \_Trigger        | ProjectPricing_Trigger        |
+| Trigger Handler | \_TriggerHandler | ProjectPricing_TriggerHandler |
+| Schedulable     | \_Schedule       | ProjectPricing_Schedule       |
+| Queueable       | \_Queueable      | ProjectPricing_Queueable      |
+| Batch           | \_Batch          | ProjectPricing_Batch          |
+| Controller      | \_Controller     | ProjectPricing_Controller     |
+
+#### Method Names
+
+Method names should be verbs, written in lowerCamelCase. The name should be made up of whole words avoiding acronyms and abbreviations when possible with the exception of widely used acronyms such as PDF and HTML.
+
+| Method Name    | Correct            | Reason                                                                                             |
+| -------------- | ------------------ | -------------------------------------------------------------------------------------------------- |
+| q1BECCalc      | :x:                | Name is not descriptive of what the method does                                                    |
+| house          | :x:                | Not a verb                                                                                         |
+| ProcessPayment | :x:                | Name isn't written in lowerCamelCase, processPayment is the correct way to write this method name. |
+| generatePDF    | :white_check_mark: |
+| calculateTax   | :white_check_mark: |
+
+#### Variable Names
+
+Variable names are written in lowerCamelCase. The names should be short yet descriptive. One character names should be avoided with the exception of temporary variables like those used within a **short** For Loop (ex. i,j,k,m,n). A variable's purpose should be clear by its name, a programmer shouldn't have to navigate to where a variable is declared to understand what it is used for.
+
+##### Constant Names
+
+Constants are the only types of variables that should be written in uppercase with words separated by underscores ex. MIN_AMOUNT.
+
+| Method Name       | Correct            | Reason                                                                                                                                                                                                                    |
+| ----------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Z                 | :x:                | What is Z referring to? This would only be acceptable if it was used within a very short section of code as a throwaway variable, but even then a more common temporary variable name like i or j should be used instead. |
+| OriginalQuantity  | :x:                | The variable is not written in lowerCamelCase, originalQuantity is the correct way to write this.                                                                                                                         |
+| agDEC             | :x:                | It is not clear what the intent of this variable is.                                                                                                                                                                      |
+| locationInventory | :white_check_mark: |
+| accountID         | :white_check_mark: |
+
+### Class & Method Conventions
+
+#### Classes & Methods Should Be Small
+
+Classes and methods should both be small. **Ideally each class should have one responsibility and every method within that class should do one thing and do it well.** It is better to have a few small organized classes rather than one large class just as it is better to have a few organized drawers rather than one large junk drawer.
+
+#### Class Cohesion
+
+Classes should have a few instance variables at the top of the class that all of the methods within the class leverage and manipulate. When all of a class's methods are working together on the same instance variables the class has good cohesion. When a class ends up with a lot of instance variables that only a subset of methods are using it is a clear sign that it is time to break the class up into multiple classes.
+
+#### Method Arguments
+
+Methods should have the least number of arguments possible. When methods start to accumulate more than three arguments it is a clear sign that those arguments should be promoted to instance class variables.
+
+#### Methods Shouldn't Have Hidden Consequences
+
+Again, each method should do the one thing it says it is going to do without any additional hidden functionality. For example, if a methods name is getTaxRate() you would expect the method to simply get the tax rate, not get the tax rate if available else calculate an estimated tax rate and populate it on a record.
+
+#### Code Shouldn't Be Repeated
+
+If the same logic or code is being copied and pasted in several places it should instead be converted into one or more methods. If the logic needs to be updated it is much simpler to update the one method instead of having to keep separate instances of the logic up to date.
 
 ## Test Classes
 
@@ -580,13 +661,14 @@ At Rosetree we use the ApexDocs standard to document the classes we write. Even 
     */
 ```
 
-####Method Documentation
-| token | description |
-|-------|-------------|
-| @description | one or more lines that provide an overview of the method|
-| @param _param name_ | a description of what the parameter does|
-| @return | a description of the return value from the method|
-| @example | Example code usage. This will be wrapped in <code> tags to preserve whitespace|
+#### Method Documentation
+
+| token               | description                                                                    |
+| ------------------- | ------------------------------------------------------------------------------ |
+| @description        | one or more lines that provide an overview of the method                       |
+| @param _param name_ | a description of what the parameter does                                       |
+| @return             | a description of the return value from the method                              |
+| @example            | Example code usage. This will be wrapped in <code> tags to preserve whitespace |
 
 ###### Example
 
