@@ -20,7 +20,7 @@
 - [Clean Code](#Clean-Code)
   - [Naming Conventions](#Naming-Conventions)
   - [Class & Method Conventions](#class--method-conventions)
-- [Testing](#Testing)
+- [Test Classes](#test-classes)
 - [Error Handling](#Error-Handling)
 - [ApexDocs](#ApexDocs)
 
@@ -640,9 +640,70 @@ We should always ask to see if the client already has a test data factory that t
 
 ## Error Handling
 
--- Example of what not to do i.e. catch an exception and system.debug it
--- Example of Try Catch
--- Example of Try Catch with Apex Logger
+#### Know When to Use a Try/Catch
+
+Knowing when to use a `try/catch` is paramount to understanding proper error handling in Apex. Review the following sections and consider what happens when an exception is caught vs uncaught.
+
+##### Unhandled Exception Steps
+
+1. Code execution stops
+2. All DML operations processed before the exception are rolled back thus not committed to the database.
+3. Exceptions are logged in debug logs
+4. Salesforce sends an unhandled exception email to the developer who last modified and any additional emails entered in the Apex Exception Email list.
+5. An error message is returned to the end user
+
+##### Handled Exceptions Steps with Try/Catch
+
+1. The logic placed in the `catch` block runs
+2. The logic placed in the `finally` block runs. Note, code in the finally block will always run regardless of an exception.
+3. The code after the `try/catch/finally` will continue to run unless the `catch/finally` returns out.
+
+##### When to use a try/catch
+
+When an unhandled exception occurs several steps are processed by Salesforce. Try/catch blocks can be used to successfully recover from exceptions as well as process a custom set of error handling steps. However, it is important to consider what you are giving up when you choose to use a `try/catch`. In most cases when you are catching exceptions you still want to process most if not all of the steps that occur when an exception is unhandled albeit you may process them in a more refined way. **Whatever you do don't simply catch an exception and log it to the developer log**.
+
+###### Incorrect Example
+
+```apex
+try {
+  // logic here...
+} catch (Exception e){
+  System.Debug('An Error Occurred '+e.getMessage());
+  // Do you need to rollback any DML operations?
+  // Should you email/notify the development team or store the log in an error log object?
+  // Should you return a message to the user?
+}
+// Do you still want this logic to run after the exception is caught?
+
+```
+
+#### Error Handler Framework
+
+As with the Trigger framework if the client doesn't have an existing error logging/handler framework you should consider using the Rosetree Error Handler framework (after reviewing with the client). The Rosetree framework utilizes platform events to save error log records to the database even if the DML operations are rolled back.
+
+##### Rosetree Framework Steps
+
+- Parses several data points out of the exception including the Apex class and method name from the stack trace.
+- Logs detailed error information to the developer logs
+- Publishes a platform event to insert the error details into a Error Log object
+
+#### Try/Catch Example
+
+```apex
+Savepoint sp = Database.setSavepoint();
+try {
+  // logic here...
+} catch (Exception e){
+  // Rollback to the savepoint
+  Database.rollback(sp);
+  /* Use the Error Handler Framework to log the error
+   * and store it in an error log object
+   */
+  ErrorHandler log = new ErrorHandler('Title','Description',e);
+  // Consider if you need to return a message to the user
+}
+
+```
 
 ## ApexDocs
 
