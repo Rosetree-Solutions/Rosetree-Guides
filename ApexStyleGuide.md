@@ -26,11 +26,11 @@
 
 ## Introduction
 
-The purpose of this style guide is to document the best practices and standards that we abide by as an organization when writing Apex code. The code that we write should not only be functional and performant, but it should also be maintainable. At the end of the day we will be handing our completed solutions over to our clients and fellow developers to maintain. For this reason we should strive to write clean code that is easily readable and extensible which is as important as making it functional.
+The purpose of this style guide is to document the best practices and standards that we abide by as an organization when writing Apex code. The code that we write should not only be functional and performant, but it should also be maintainable. At the end of the day, we will be handing our completed solutions over to our clients and fellow developers to maintain. For this reason, we should strive to write clean code that is easily readable and extensible which is as important as making it functional.
 
-This document will serve as the basis for code review comments and suggestions. The content included in this document is certainly not exhaustive of everything one needs to know to write proper Apex code. However the information included should provide guidance for the most criticical areas surrounding best practices, cleanliness, maintainability, and general standards that we follow.
+This document will serve as the basis for code review comments and suggestions. The content included in this document is certainly not exhaustive of everything one needs to know to write proper Apex code. However, the information included should provide guidance for the most critical areas surrounding best practices, cleanliness, maintainability, and general standards that we follow.
 
-Please note, you are strongly encouraged to share your thoughts on the content within this document. If you disagree with anything in this style guide or you think something should be added simply create a Feature branch, make the change, and submit it via a pull request for review. At the end of the day we strive to write good code as an organization and learning from each other is paramount to us achieving this goal.
+Please note, you are strongly encouraged to share your thoughts on the content within this document. If you disagree with anything in this style guide or you think something should be added simply create a Feature branch, make the change, and submit it via a pull request for review. At the end of the day, we strive to write good code as an organization and learning from each other is paramount to us achieving this goal.
 
 ## Best Practices
 
@@ -38,7 +38,7 @@ Please note, you are strongly encouraged to share your thoughts on the content w
 
 There are governor limits that enforce the maximum number of DML statements (insert, update, delete, undelete) used within an Apex transaction. When DML statements are placed inside of a `for` loop they are run once per iteration of the loop making it easy to hit the limit quickly.
 
-Instead DML operations should be moved out of `for` loops by collecting the records to modify inside of a collection and invoking the DML operation once on the collection of data.
+Instea, DML operations should be moved out of `for` loops by collecting the records to modify inside of a collection and invoking the DML operation once on the collection of data.
 
 ###### Incorrect Example
 
@@ -77,7 +77,7 @@ private static void updateAccounts(List<Account> accountList) {
 
 #### No SOQL in For Loops
 
-There are governor limits that enforce the maximum number of SOQL queries used within an Apex transaction. When SOQL queries are placed inside of a `for` loop they are run once per iteration of the loop making it easy to hit the limit quickly. Instead SOQL queries should be moved out of `for` loops.
+There are governor limits that enforce the maximum number of SOQL queries used within an Apex transaction. When SOQL queries are placed inside of a `for` loop they are run once per iteration of the loop making it easy to hit the limit quickly. Instead, SOQL queries should be moved out of `for` loops.
 
 ###### Incorrect Example
 
@@ -122,7 +122,7 @@ trigger AccountTrigger on Account(before update) {
 
 #### Use SOQL Queries Efficiently
 
-A developer should always be as efficient as possible when writing queries against the database. The current synchronous SOQL limit is 100 queries issued within one Apex transaction. The 100 query limit may sound like a lot, but as the code base grows and additional solutions are added you can hit the limit easily if queries have not been handled efficiently from the begining.
+A developer should always be as efficient as possible when writing queries against the database. The current synchronous SOQL limit is 100 queries issued within one Apex transaction. The 100 query limit may sound like a lot, but as the code base grows and additional solutions are added you can hit the limit easily if queries have not been handled efficiently from the beginning.
 
 ##### Combine SOQL Queries Where Possible
 
@@ -190,11 +190,11 @@ Use relationships in queries to pull in all of the required data and records int
 
 #### Be Mindful & Efficient with Limits
 
-All Apex code is held to specified [governor limits](https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm). When writing code the goal is not to simply stay within the limits, but to write code efficiently so that it consumes the least number of limits possible. If you can refactor a section of code to consume fewer SOQL queries, DML statements, or callouts it is always better to do so even if it means the code is slightly longer or is a little less easy to read.
+All Apex code is held to specified [governor limits](https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm). When writing code the goal is not to simply stay within the limits but to write code efficiently so that it consumes the least number of limits possible. If you can refactor a section of code to consume fewer SOQL queries, DML statements, or callouts it is always better to do so even if it means the code is slightly longer or is a little less easy to read.
 
 #### Know When To Use DML VS Database Methods
 
-When running a DML operation on a list it is common that if one record fails you **do not** want all of the other records to also fail. For this reason it is often preferred to use [Database methods](https://developer.salesforce.com/docs/atlas.en-us.apexref.meta/apexref/apex_methods_system_database.htm#apex_System_Database_insert_2) instead of a standard DML operation. When changing data in the database always consider how potential errors should be handled.
+When running a DML operation on a list it is common that if one record fails you **do not** want all of the other records to also fail. For this reason, it is often preferred to use [Database methods](https://developer.salesforce.com/docs/atlas.en-us.apexref.meta/apexref/apex_methods_system_database.htm#apex_System_Database_insert_2) instead of a standard DML operation. When changing data in the database always consider how potential errors should be handled.
 
 - **Use DML When**: You would like an error that is returned during processing to return an exception as well as block all of the other records from being processed.
 - **Use Database Methods When**: You would like to allow partial success on bulk operations with the ability to review any errors via the results array response.
@@ -247,7 +247,7 @@ Ensure your code properly handles batches of records. This is especially importa
 
 #### Avoid Hardcoding IDs
 
-Most IDs change between sandbox and production environments. For this reason we should not place IDs directly in the Apex code.
+Most IDs change between sandbox and production environments. For this reason, we should not place IDs directly in the Apex code.
 
 ###### Incorrect Example
 
@@ -291,7 +291,7 @@ trigger AccountTrigger on Account(before update) {
 
 ##### Only Have One Trigger Per Object
 
-When multiple Triggers are created for the exact same object you can't control the order in which each Trigger runs. In addition multiple Triggers is more difficult to debug and maintain. When creating a Trigger for a client always look and see if another trigger exists on the object first; if a Trigger already exists it is very likely their developers would prefer you add on to their existing trigger/handler.
+When multiple Triggers are created for the same object you can't control the order in which each Trigger runs. In addition, multiple Triggers are more difficult to debug and maintain. When creating a Trigger for a client always look and see if another trigger exists on the object first; if a Trigger already exists it is very likely their developers would prefer you add on to their existing trigger/handler.
 
 ##### Keep Logic Out of Triggers
 
@@ -303,9 +303,9 @@ If the client doesn't have an existing Trigger framework you should use the RTS 
 
 ## Formatting
 
-We use the [Prettier Code Formatter](https://developer.salesforce.com/tools/vscode/en/user-guide/prettier/) for APEX which is available through this [plugin](https://github.com/dangmai/prettier-plugin-apex). Most developers are auto formatting their code upon save through the use of a code formatting engine. If multiple developers are working on the same file it is very beneficial that they use the same code formatter. For this reason the use of this plugin is encouraged but not required.
+We use the [Prettier Code Formatter](https://developer.salesforce.com/tools/vscode/en/user-guide/prettier/) for APEX which is available through this [plugin](https://github.com/dangmai/prettier-plugin-apex). Most developers are auto-formatting their code upon save through the use of a code formatting engine. If multiple developers are working on the same file it is very beneficial that they use the same code formatter. For this reason, the use of this plugin is encouraged but not required.
 
-From a code review perspective the following standards will be enforced.
+From a code review perspective, the following standards will be enforced.
 
 ##### Braces are Used Where Optional
 
@@ -470,7 +470,7 @@ Constants are the only types of variables that should be written in uppercase wi
 
 #### Classes & Methods Should Be Small
 
-Classes and methods should both be small. **Ideally each class should have one responsibility and every method within that class should do one thing and do it well.** It is better to have a few small organized classes rather than one large class just as it is better to have a few organized drawers rather than one large junk drawer.
+Classes and methods should both be small. **Ideally, each class should have one responsibility and every method within that class should do one thing and do it well.** It is better to have a few small organized classes rather than one large class just as it is better to have a few organized drawers rather than one large junk drawer.
 
 #### Class Cohesion
 
@@ -482,7 +482,7 @@ Methods should have the least number of arguments possible. When methods start t
 
 #### Methods Shouldn't Have Hidden Consequences
 
-Again, each method should do the one thing it says it is going to do without any additional hidden functionality. For example, if a methods name is getTaxRate() you would expect the method to simply get the tax rate, not get the tax rate if available else calculate an estimated tax rate and populate it on a record.
+Again, each method should do the one thing it says it is going to do without any additional hidden functionality. For example, if a method's name is getTaxRate() you would expect the method to simply get the tax rate, not get the tax rate if available else calculate an estimated tax rate and populate it on a record.
 
 #### Code Shouldn't Be Repeated
 
@@ -601,7 +601,7 @@ You should create all of the data that your test class relies on directly within
 
 ##### Test Setup Methods
 
-Test setup methods can and should be used to create test data that all test methods within the test class can rely in. Creating all or most of the data for the test class within one setup method will help keep the test methods clean.
+Test setup methods can and should be used to create test data that all test methods within the test class can rely on. Creating all or most of the data for the test class within one setup method will help keep the test methods clean.
 
 ```Apex
 @isTest
@@ -707,7 +707,7 @@ try {
 
 ## ApexDocs
 
-[ApexDocs](https://github.com/SalesforceFoundation/ApexDoc) is a Java app which can be used to document Salesforce Apex Classes. You simply point the app at the location of the Apex classes/project folder and it will automatically generate static HTML pages that fully document the class including its properties and methods.
+[ApexDocs](https://github.com/SalesforceFoundation/ApexDoc) is a Java app that can be used to document Salesforce Apex Classes. You simply point the app at the location of the Apex classes/project folder and it will automatically generate static HTML pages that fully document the class including its properties and methods.
 
 At Rosetree we use the ApexDocs standard to document the classes we write. Even if the client doesn't choose to generate the static HTML pages that the Java app provides the documentation within the class is helpful for future developers. **At a minimum ApexDoc should be written for every class**, but it would also be beneficial to add to most methods.
 
