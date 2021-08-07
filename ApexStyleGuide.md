@@ -3,11 +3,23 @@
 ## Table of Contents
 
 - [Introduction](#Introduction)
-
-- [Formatting](#Formatting)
 - [Best Practices](#Best-Practices)
-- [Keep Code Clean](#Keep-Code-Clean)
+  - [No DML in For Loops](#no-dml-in-for-loops)
+  - [No SOQL in For Loops](#no-soql-in-for-loops)
+  - [Use SOQL Queries Efficiently](#use-soql-queries-efficiently)
+  - [Use Relationships in Queries](#use-relationships-in-queries)
+  - [Be Mindful & Efficient with Limits](#be-mindful--efficient-with-limits)
+  - [Know When To Use DML VS Database Methods](#know-when-to-use-dml-vs-database-methods)
+  - [Bulkfiy Your Code](#bulkify-your-code)
+  - [Avoid Hardcoding IDs](#avoid-hardcoding-ids)
+  - [Trigger Best Practices](#trigger-best-practices)
+    - [Only Have One Trigger Per Object](#only-have-one-trigger-per-object)
+    - [Keep Logic Out of Triggers](#keep-logic-out-of-triggers)
+    - [Use the RTS Trigger Framework](#use-the-rts-trigger-framework)
+- [Formatting](#Formatting)
+- [Clean Code](#Clean-Code)
   - [Naming Conventions](#Naming-Conventions)
+  - [Class & Method Conventions](#class--method-conventions)
 - [Testing](#Testing)
 - [Error Handling](#Error-Handling)
 - [ApexDocs](#ApexDocs)
@@ -19,109 +31,6 @@ The purpose of this style guide is to document the best practices and standards 
 This document will serve as the basis for code review comments and suggestions. The content included in this document is certainly not exhaustive of everything one needs to know to write proper Apex code. However the information included should provide guidance for the most criticical areas surrounding best practices, cleanliness, maintainability, and general standards that we follow.
 
 Please note, you are strongly encouraged to share your thoughts on the content within this document. If you disagree with anything in this style guide or you think something should be added simply create a Feature branch, make the change, and submit it via a pull request for review. At the end of the day we strive to write good code as an organization and learning from each other is paramount to us achieving this goal.
-
-## Formatting
-
-We use the [Prettier Code Formatter](https://developer.salesforce.com/tools/vscode/en/user-guide/prettier/) for APEX which is available through this [plugin](https://github.com/dangmai/prettier-plugin-apex). Most developers are auto formatting their code upon save through the use of a code formatting engine. If multiple developers are working on the same file it is very beneficial that they use the same code formatter. For this reason the use of this plugin is encouraged but not required.
-
-From a code review perspective the following standards will be enforced.
-
-##### Braces are Used Where Optional
-
-Braces should be used with `if`, `else`, `for`, `do`, and `while` statements even if the body includes a single statement or is empty.
-
-###### Incorrect Example
-
-```apex
-if(condition)
-    statement;
-```
-
-###### Correct Example
-
-```apex
-if(condition){
-    statement;
-}
-```
-
-##### Variables Should be Declared Where Needed
-
-Local variables should be declared close to the point in the code where they are first used. Do not declare all local variables at the top of their containing block.
-
-###### Incorrect Example
-
-```apex
-private static void doSomething(){
-    private static String dogName;
-    private static String catName;
-
-    /*
-     * All the code in the do something method....
-     */
-}
-```
-
-###### Correct Example
-
-```apex
-private static void doSomething(){
-
-    private static String dogName;
-    /*
-     * The code that uses the dogName variable
-     */
-
-    private static String catName;
-    /*
-     * The code that uses the catName variable
-     */
-}
-```
-
-##### Maximum Line Length 120 Characters
-
-The maximum line length should generally not exceed 120 characters. Once the limit has been reached the line should be wrapped onto another line. There aren't strict rules for how a line should be wrapped in all situations as there are many valid approaches. Below are the common line-wrapping techniques that we use.
-
-###### SOQL Line-Wrapping
-
-Short SOQL queries do not need to be wrapped.
-
-```Apex
-List<Account> accountList = [SELECT Id, Name FROM Account LIMIT 10];
-```
-
-Longer queries should be wrapped before reserved words like `SELECT`, `FROM`, `WHERE`, `LIMIT`, etc.
-
-```Apex
-    List<Contact> contacts = [
-        SELECT id, salutation, firstname, lastname, email
-        FROM Contact
-        WHERE accountId = :a.Id
-    ];
-```
-
-Yet, another example showing how to break up longer queries with an inner query. Note, if you would like to break up a long `SELECT` statement you should break the line after each `,`.
-
-```Apex
-    List<Project_Pricing__c> record = [
-      SELECT
-        Id,
-        Product__c,
-        Cost__c,
-        Vendor__c,
-        (
-          SELECT Id, Product__c, Project_Pricing__c, Cost_Price__c
-          FROM Plan_Type_Items__r
-        )
-      FROM Project_Pricing__c
-      WHERE
-        Product__c = :product
-        AND Vendor__c = :supplier
-        AND Project__c = :project
-      LIMIT 10
-    ];
-```
 
 ## Best Practices
 
@@ -257,7 +166,7 @@ A developer should always be as efficient as possible when writing queries again
       }
 ```
 
-##### Use Relationships in Queries
+#### Use Relationships in Queries
 
 Use relationships in queries to pull in all of the required data and records into one consolidated query. In the one query below we are pulling in Accounts with their closed opportunities including the owner of those opportunities.
 
@@ -336,20 +245,6 @@ When running a DML operation on a list it is common that if one record fails you
 
 Ensure your code properly handles batches of records. This is especially important with Triggers as it is common for a trigger to be invoked by a batch of records being processed through an import or API call into Salesforce. However when writing any Apex code make sure you understand how the code will be invoked; when code is invoked via a batch of records all of the records should be processed in bulk to ensure the solution is scalable and we are staying within limits. The sections on [SOQL ](##no-soql-in-for-loops) and [DML ](#no-dml-in-for-loops) statements in `For` loops share some bulk processing techniques.
 
-#### Trigger Best Practices
-
-##### Only Have One Trigger Per Object
-
-When multiple Triggers are created for the exact same object you can't control the order in which each Trigger runs. In addition multiple Triggers is more difficult to debug and maintain. When creating a Trigger for a client always look and see if another trigger exists on the object first; if a Trigger already exists it is very likely their developers would prefer you add on to their existing trigger/handler.
-
-##### Keep Logic Out of Triggers
-
-Placing all of the logic of Triggers inside a Trigger Handler will keep the Trigger itself clean as well as allow one to run the logic of a trigger separately in another class if desired. Breaking out the logic into separate methods within the handler also makes it much easier to maintain and extend the Trigger logic.
-
-##### Use the RTS Trigger Framework
-
-If the client doesn't have an existing Trigger framework you should use the RTS Trigger Framework (after reviewing with the client). Our Trigger framework makes developing new Triggers and Trigger Handlers fast and easy while also including several best practices such as separating the trigger logic into handler classes, Apex bypass logic, and recursion prevention via the use of static variables.
-
 #### Avoid Hardcoding IDs
 
 Most IDs change between sandbox and production environments. For this reason we should not place IDs directly in the Apex code.
@@ -392,7 +287,124 @@ trigger AccountTrigger on Account(before update) {
 }
 ```
 
-## Keep Code Clean
+#### Trigger Best Practices
+
+##### Only Have One Trigger Per Object
+
+When multiple Triggers are created for the exact same object you can't control the order in which each Trigger runs. In addition multiple Triggers is more difficult to debug and maintain. When creating a Trigger for a client always look and see if another trigger exists on the object first; if a Trigger already exists it is very likely their developers would prefer you add on to their existing trigger/handler.
+
+##### Keep Logic Out of Triggers
+
+Placing all of the logic of Triggers inside a Trigger Handler will keep the Trigger itself clean as well as allow one to run the logic of a trigger separately in another class if desired. Breaking out the logic into separate methods within the handler also makes it much easier to maintain and extend the Trigger logic.
+
+##### Use the RTS Trigger Framework
+
+If the client doesn't have an existing Trigger framework you should use the RTS Trigger Framework (after reviewing with the client). Our Trigger framework makes developing new Triggers and Trigger Handlers fast and easy while also including several best practices such as separating the trigger logic into handler classes, Apex bypass logic, and recursion prevention via the use of static variables.
+
+## Formatting
+
+We use the [Prettier Code Formatter](https://developer.salesforce.com/tools/vscode/en/user-guide/prettier/) for APEX which is available through this [plugin](https://github.com/dangmai/prettier-plugin-apex). Most developers are auto formatting their code upon save through the use of a code formatting engine. If multiple developers are working on the same file it is very beneficial that they use the same code formatter. For this reason the use of this plugin is encouraged but not required.
+
+From a code review perspective the following standards will be enforced.
+
+##### Braces are Used Where Optional
+
+Braces should be used with `if`, `else`, `for`, `do`, and `while` statements even if the body includes a single statement or is empty.
+
+###### Incorrect Example
+
+```apex
+if(condition)
+    statement;
+```
+
+###### Correct Example
+
+```apex
+if(condition){
+    statement;
+}
+```
+
+##### Variables Should be Declared Where Needed
+
+Local variables should be declared close to the point in the code where they are first used. Do not declare all local variables at the top of their containing block.
+
+###### Incorrect Example
+
+```apex
+private static void doSomething(){
+    private static String dogName;
+    private static String catName;
+
+    /*
+     * All the code in the do something method....
+     */
+}
+```
+
+###### Correct Example
+
+```apex
+private static void doSomething(){
+
+    private static String dogName;
+    /*
+     * The code that uses the dogName variable
+     */
+
+    private static String catName;
+    /*
+     * The code that uses the catName variable
+     */
+}
+```
+
+##### Maximum Line Length 120 Characters
+
+The maximum line length should generally not exceed 120 characters. Once the limit has been reached the line should be wrapped onto another line. There aren't strict rules for how a line should be wrapped in all situations as there are many valid approaches. Below are the common line-wrapping techniques that we use.
+
+###### SOQL Line-Wrapping
+
+Short SOQL queries do not need to be wrapped.
+
+```Apex
+List<Account> accountList = [SELECT Id, Name FROM Account LIMIT 10];
+```
+
+Longer queries should be wrapped before reserved words like `SELECT`, `FROM`, `WHERE`, `LIMIT`, etc.
+
+```Apex
+    List<Contact> contacts = [
+        SELECT id, salutation, firstname, lastname, email
+        FROM Contact
+        WHERE accountId = :a.Id
+    ];
+```
+
+Yet, another example showing how to break up longer queries with an inner query. Note, if you would like to break up a long `SELECT` statement you should break the line after each `,`.
+
+```Apex
+    List<Project_Pricing__c> record = [
+      SELECT
+        Id,
+        Product__c,
+        Cost__c,
+        Vendor__c,
+        (
+          SELECT Id, Product__c, Project_Pricing__c, Cost_Price__c
+          FROM Plan_Type_Items__r
+        )
+      FROM Project_Pricing__c
+      WHERE
+        Product__c = :product
+        AND Vendor__c = :supplier
+        AND Project__c = :project
+      LIMIT 10
+    ];
+```
+
+## Clean Code
 
 ### Naming Conventions
 
@@ -587,7 +599,7 @@ public class AccountTrigger_Test {
 
 You should create all of the data that your test class relies on directly within the test class. Each test class should work independently and be isolated from the rest of the data in the environment.
 
-###### Test Setup Methods
+##### Test Setup Methods
 
 Test setup methods can and should be used to create test data that all test methods within the test class can rely in. Creating all or most of the data for the test class within one setup method will help keep the test methods clean.
 
@@ -620,7 +632,7 @@ public class AccountTrigger_Test {
 
 ```
 
-###### Test Data Factory
+##### Test Data Factory
 
 Another great way to generate test data is through the use of a test data factory. A test data factory is a separate class that is responsible for generating test data. All test classes written can then rely on the test data factory class to generate the test data needed. If validation rules or new required fields are added to an object a developer just needs to update the test data factory class instead of having to update the object creation in every test class.
 
