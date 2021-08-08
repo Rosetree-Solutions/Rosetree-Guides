@@ -17,7 +17,7 @@
     - [Keep Logic Out of Triggers](#keep-logic-out-of-triggers)
     - [Use the RTS Trigger Framework](#use-the-rts-trigger-framework)
 - [Formatting](#Formatting)
-- [Clean Code](#Clean-Code)
+- [Clean Code Principles](#Clean-Code-Principles)
   - [Naming Conventions](#Naming-Conventions)
   - [Class & Method Conventions](#class--method-conventions)
 - [Test Classes](#test-classes)
@@ -30,15 +30,17 @@ The purpose of this style guide is to document the best practices and standards 
 
 This document will serve as the basis for code review comments and suggestions. The content included in this document is certainly not exhaustive of everything one needs to know to write proper Apex code. However, the information included should provide guidance for the most critical areas surrounding best practices, cleanliness, maintainability, and general standards that we follow.
 
-Please note, you are strongly encouraged to share your thoughts on the content within this document. If you disagree with anything in this style guide or you think something should be added simply create a Feature branch, make the change, and submit it via a pull request for review. At the end of the day, we strive to write good code as an organization and learning from each other is paramount to us achieving this goal.
+Please note, you are strongly encouraged to share your thoughts on the content within this document. If you disagree with anything in this style guide or you think something should be added simply create a Feature branch, make the change, and submit it via a pull request for review. At the end of the day, we strive to write good code and learning from each other is paramount to us achieving this goal.
 
 ## Best Practices
+
+The following best practices should be observed when writing Apex code. These key practices will help to ensure we are building efficient, scalable, and maintainable code on the platform.
 
 #### No DML in For Loops
 
 There are governor limits that enforce the maximum number of DML statements (insert, update, delete, undelete) used within an Apex transaction. When DML statements are placed inside of a `for` loop they are run once per iteration of the loop making it easy to hit the limit quickly.
 
-Instea, DML operations should be moved out of `for` loops by collecting the records to modify inside of a collection and invoking the DML operation once on the collection of data.
+Instead, DML operations should be moved out of `for` loops by gathering the records to modify inside of a collection and invoking the DML operation once on the collection of data.
 
 ###### Incorrect Example
 
@@ -243,11 +245,11 @@ When running a DML operation on a list it is common that if one record fails you
 
 #### Bulkify Your Code
 
-Ensure your code properly handles batches of records. This is especially important with Triggers as it is common for a trigger to be invoked by a batch of records being processed through an import or API call into Salesforce. However when writing any Apex code make sure you understand how the code will be invoked; when code is invoked via a batch of records all of the records should be processed in bulk to ensure the solution is scalable and we are staying within limits. The sections on [SOQL ](##no-soql-in-for-loops) and [DML ](#no-dml-in-for-loops) statements in `For` loops share some bulk processing techniques.
+Ensure your code properly handles batches of records. This is especially important with Triggers as it is common for a trigger to be invoked by a batch of records being processed through an import or API call into Salesforce. However when writing any Apex code make sure you understand how the code will be invoked; when code is invoked via a batch of records all of the records should be processed in bulk to ensure the solution is scalable and stays within limits. The sections on [SOQL ](#no-soql-in-for-loops) and [DML ](#no-dml-in-for-loops) statements in `For` loops share some bulk processing techniques.
 
 #### Avoid Hardcoding IDs
 
-Most IDs change between sandbox and production environments. For this reason, we should not place IDs directly in the Apex code.
+Most IDs change between sandbox and production environments. For this reason, we should not place IDs directly in Apex code.
 
 ###### Incorrect Example
 
@@ -299,7 +301,7 @@ Placing all of the logic of Triggers inside a Trigger Handler will keep the Trig
 
 ##### Use the RTS Trigger Framework
 
-If the client doesn't have an existing Trigger framework you should use the RTS Trigger Framework (after reviewing with the client). Our Trigger framework makes developing new Triggers and Trigger Handlers fast and easy while also including several best practices such as separating the trigger logic into handler classes, Apex bypass logic, and recursion prevention via the use of static variables.
+If the client doesn't have an existing Trigger framework you should use the RTS Trigger Framework (after reviewing with the client). Our Trigger framework makes developing new Triggers and Trigger Handlers fast and easy while also including several best practices such as separating the trigger logic into handler classes, Apex bypass functionality via custom metadata records, and recursion prevention through the use of static variables.
 
 ## Formatting
 
@@ -328,7 +330,7 @@ if(condition){
 
 ##### Variables Should be Declared Where Needed
 
-Local variables should be declared close to the point in the code where they are first used. Do not declare all local variables at the top of their containing block.
+**Local** variables should be declared close to the point in the code where they are first used. Do not declare all **local** variables at the top of their containing block.
 
 ###### Incorrect Example
 
@@ -362,7 +364,7 @@ private static void doSomething(){
 
 ##### Maximum Line Length 120 Characters
 
-The maximum line length should generally not exceed 120 characters. Once the limit has been reached the line should be wrapped onto another line. There aren't strict rules for how a line should be wrapped in all situations as there are many valid approaches. Below are the common line-wrapping techniques that we use.
+The maximum line length should generally not exceed 120 characters. Once the limit has been reached the line should be wrapped onto another line. There aren't strict rules for how a line should be wrapped in all situations as there are many valid approaches.
 
 ###### SOQL Line-Wrapping
 
@@ -404,7 +406,9 @@ Yet, another example showing how to break up longer queries with an inner query.
     ];
 ```
 
-## Clean Code
+## Clean Code Principles
+
+Clean code is simple, direct, elegant, and efficient. Another developer should be able to easily read your code and maintain it as well as extend it with additional functionality.
 
 ### Naming Conventions
 
@@ -470,7 +474,7 @@ Constants are the only types of variables that should be written in uppercase wi
 
 #### Classes & Methods Should Be Small
 
-Classes and methods should both be small. **Ideally, each class should have one responsibility and every method within that class should do one thing and do it well.** It is better to have a few small organized classes rather than one large class just as it is better to have a few organized drawers rather than one large junk drawer.
+Classes and methods should both be small. **Ideally, each class should have one responsibility and every method within that class should do one thing and do it well.** It is better to have a few small organized classes rather than one large class.
 
 #### Class Cohesion
 
@@ -478,11 +482,11 @@ Classes should have a few instance variables at the top of the class that all of
 
 #### Method Arguments
 
-Methods should have the least number of arguments possible. When methods start to accumulate more than three arguments it is a clear sign that those arguments should be promoted to instance class variables.
+Methods should have the least number of arguments possible. When methods start to accumulate more than three arguments it is a sign that those arguments should be promoted to instance class variables.
 
 #### Methods Shouldn't Have Hidden Consequences
 
-Again, each method should do the one thing it says it is going to do without any additional hidden functionality. For example, if a method's name is getTaxRate() you would expect the method to simply get the tax rate, not get the tax rate if available else calculate an estimated tax rate and populate it on a record.
+Again, each method should do the one thing it says it is going to do without any additional hidden functionality. For example, if a method's name is getTaxRate() you would expect the method to simply get the tax rate, not get the tax rate if available `else` calculate an estimated tax rate and populate it on a record.
 
 #### Code Shouldn't Be Repeated
 
@@ -490,7 +494,7 @@ If the same logic or code is being copied and pasted in several places it should
 
 ## Test Classes
 
-The foremost goal of a test class is to ensure that Apex code is working as designed and expected.
+The foremost goal of a test class is to ensure the Apex code it covers is working as designed and expected.
 
 ##### 100% Code Coverage is the Goal, 90% is Acceptable
 
