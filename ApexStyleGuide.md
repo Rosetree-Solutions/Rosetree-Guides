@@ -700,13 +700,111 @@ try {
 } catch (Exception e){
   // Rollback to the savepoint
   Database.rollback(sp);
-  /* Use the Error Handler Framework to log the error
+  /* Use the Rosetree Error Handler Framework to log the error
    * and store it in an error log object
    */
   ErrorHandler log = new ErrorHandler('Title','Description',e);
   // Consider if you need to return a message to the user
 }
 
+```
+
+#### Error Handling Best Practices By Apex Type
+
+The general error handling best practices are different depending on how the Apex code is being invoked i.e. Trigger, Visualforce page controller, Asynchronously, etc. The following are best practices to consider for each Apex type. However, it is important to consider your specific scenario and adjust the error handling appropriately.
+
+##### Triggers
+
+The addError method can be used with Triggers to display a friendly error message to the application/user. Adding addError() to a record will block the DML operation from occurring for that record as well as rollback the processing of all of the other records included in that trigger context unless the trigger was invoced by a database method with the `allOrNone=false` option set.
+
+1. Catch the Exception
+2. Use the RTS Error Handler Framework to log the error and store it in an error log object
+3. Return a friendly error to the application/user via addError()
+
+```apex
+trigger AccountTrigger on Account(before update) {
+  for (Account a : Trigger.new) {
+    try {
+      // logic here...
+    } catch (Exception e) {
+      /* Use the Rosetree Error Handler Framework to log the error
+       * and store it in an error log object
+       */
+      ErrorHandler log = new ErrorHandler('Title', 'Description', e);
+      /* Blocks the DML operation and shows the
+       * custom error message to the user
+       */
+      a.addError('Friendly Error Message For User');
+    }
+  }
+}
+```
+
+##### Asynchronous Apex
+
+The following error handling best practices apply to asynchronous Apex operations such as `Scheduled`, `Batch`, `Future`, and `Queueable` classes.
+
+1. Catch the Exception
+2. Rollback to a defined Savepoint
+3. Use the RTS Error Handler Framework to log the error and store it in an error log object
+
+```Apex
+Savepoint sp = Database.setSavepoint();
+try {
+  // logic here...
+} catch (Exception e){
+  // Rollback to the savepoint
+  Database.rollback(sp);
+  /* Use the Rosetree Error Handler Framework to log the error
+   * and store it in an error log object
+   */
+  ErrorHandler log = new ErrorHandler('Title','Description',e);
+}
+```
+
+##### Visualforce
+
+1. Catch the Exception
+2. Rollback to a defined Savepoint
+3. Use the RTS Error Handler Framework to log the error and store it in an error log object
+4. Return a friendly error to the page via ApexPages.addMessage()
+
+###### Visualforce Page
+
+```HTML
+<apex:page controller="myController">
+  <!-- All errors in Apex added via ApexPages.addMessages() will be displayed below -->
+  <apex:pageMessages ></apex:pageMessages>
+  <!-- The rest of the page...   -->
+</apex:page>
+
+```
+
+###### Apex
+
+```Apex
+  public class MyController {
+    public MyController() {
+      Savepoint sp = Database.setSavepoint();
+      try {
+        // logic here...
+      } catch (Exception e) {
+        // Rollback to the savepoint
+        Database.rollback(sp);
+        /* Use the Rosetree Error Handler Framework to log the error
+         * and store it in an error log object
+         */
+        ErrorHandler log = new ErrorHandler('Title', 'Description', e);
+        // Add the Error to the page
+        ApexPages.addmessage(
+          new ApexPages.message(
+            ApexPages.severity.Error,
+            'A friendly Error Message'
+          )
+        );
+      }
+    }
+  }
 ```
 
 ## ApexDocs
