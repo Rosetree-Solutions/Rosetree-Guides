@@ -301,7 +301,7 @@ Placing all of the logic of Triggers inside a Trigger Handler will keep the Trig
 
 ##### Use the RTS Trigger Framework
 
-If the client doesn't have an existing Trigger framework you should use the RTS Trigger Framework (after reviewing with the client). Our Trigger framework makes developing new Triggers and Trigger Handlers fast and easy while also including several best practices such as separating the trigger logic into handler classes, Apex bypass functionality via custom metadata records, and recursion prevention through the use of static variables.
+If the client doesn't have an existing Trigger framework you should use the [RTS Trigger Framework](https://github.com/Rosetree-Solutions/Rosetree-Trigger-Framework) (after reviewing with the client). Our Trigger framework makes developing new Triggers and Trigger Handlers fast and easy while also including several best practices such as separating the trigger logic into handler classes, Apex bypass functionality via custom metadata records, and recursion prevention through the use of static variables. The documentation for the RTS Trigger Framework and the instructions for installation can be found [here](https://github.com/Rosetree-Solutions/Rosetree-Trigger-Framework). 
 
 ## Formatting
 
